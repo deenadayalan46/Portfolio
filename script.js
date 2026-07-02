@@ -50,9 +50,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
 
-  // Create a backdrop overlay for tap-outside-to-close
+  // Backdrop overlay — created once, reused
   const menuBackdrop = document.createElement('div');
   menuBackdrop.id = 'menuBackdrop';
+  menuBackdrop.setAttribute('aria-hidden', 'true');
   document.body.appendChild(menuBackdrop);
 
   function closeMobileMenu() {
@@ -60,23 +61,34 @@ document.addEventListener('DOMContentLoaded', () => {
     hamburger.setAttribute('aria-expanded', 'false');
     mobileMenu.classList.remove('open');
     menuBackdrop.classList.remove('active');
-    // Restore scroll position after removing position:fixed
-    const scrollY = document.body.style.top;
-    document.body.classList.remove('menu-open');
-    document.body.style.top = '';
-    window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    document.documentElement.classList.remove('menu-open');
   }
 
   function openMobileMenu() {
-    // Save current scroll position before fixing body
-    document.body.style.setProperty('--scroll-y', `-${window.scrollY}px`);
-    document.body.style.top = `-${window.scrollY}px`;
     mobileMenu.classList.add('open');
     hamburger.classList.add('open');
     hamburger.setAttribute('aria-expanded', 'true');
     menuBackdrop.classList.add('active');
-    document.body.classList.add('menu-open');
+    document.documentElement.classList.add('menu-open');
   }
+
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    mobileMenu.classList.contains('open') ? closeMobileMenu() : openMobileMenu();
+  });
+
+  // Tap backdrop to close
+  menuBackdrop.addEventListener('click', closeMobileMenu);
+
+  // Tap a nav link to close
+  document.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', closeMobileMenu);
+  });
+
+  // Escape key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobileMenu();
+  });
 
   hamburger.addEventListener('click', (e) => {
     e.stopPropagation();

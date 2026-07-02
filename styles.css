@@ -421,19 +421,17 @@ html[data-theme="dark"] .mobile-menu {
   position: fixed;
   inset: 0;
   z-index: 998;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.40);
   -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
 }
 #menuBackdrop.active {
   display: block;
 }
 
-/* Prevent body scroll when menu is open — safe on iOS (no overflow:hidden) */
-body.menu-open {
-  position: fixed;
-  width: 100%;
-  /* Preserve scroll position */
-  top: calc(-1 * var(--scroll-y, 0px));
+/* Lock scroll on html (not body) — works on iOS and desktop */
+html.menu-open {
+  overflow: hidden;
 }
 .mobile-link {
   font-family: var(--font-display);
