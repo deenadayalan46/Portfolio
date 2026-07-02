@@ -415,24 +415,20 @@ html[data-theme="dark"] .mobile-menu {
 }
 .mobile-menu.open { transform: translateX(0); }
 
-/* Backdrop overlay for tap-outside-to-close */
+/* Backdrop overlay — tap outside to close */
 #menuBackdrop {
   display: none;
   position: fixed;
   inset: 0;
   z-index: 998;
   background: rgba(0, 0, 0, 0.40);
-  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-#menuBackdrop.active {
-  display: block;
-}
+#menuBackdrop.active { display: block; }
 
-/* Lock scroll on html (not body) — works on iOS and desktop */
-html.menu-open {
-  overflow: hidden;
-}
+/* Lock scroll while menu is open */
+html.menu-open { overflow: hidden; }
 .mobile-link {
   font-family: var(--font-display);
   font-size: 1.05rem;

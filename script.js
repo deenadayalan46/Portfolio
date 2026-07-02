@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('load', () => {
     setTimeout(() => loader.classList.add('hidden'), 400);
   });
-  // Fallback in case 'load' already fired or takes too long
   setTimeout(() => loader.classList.add('hidden'), 2200);
 
   /* ---------------- THEME TOGGLE ---------------- */
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function applyTheme(theme) {
     root.setAttribute('data-theme', theme);
-    try { localStorage.setItem('dk-theme', theme); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem('dk-theme', theme); } catch (e) {}
   }
 
   let savedTheme;
@@ -26,22 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (savedTheme) {
     applyTheme(savedTheme);
-  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     applyTheme('dark');
   } else {
     applyTheme('light');
   }
 
   themeToggle.addEventListener('click', () => {
-    const current = root.getAttribute('data-theme');
-    applyTheme(current === 'dark' ? 'light' : 'dark');
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   });
 
   /* ---------------- NAVBAR SCROLL STATE ---------------- */
   const navbar = document.getElementById('navbar');
   function updateNavbarState() {
-    if (window.scrollY > 40) navbar.classList.add('scrolled');
-    else navbar.classList.remove('scrolled');
+    navbar.classList.toggle('scrolled', window.scrollY > 40);
   }
   updateNavbarState();
   window.addEventListener('scroll', updateNavbarState, { passive: true });
@@ -50,18 +47,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
 
-  // Backdrop overlay — created once, reused
+  // Single backdrop element
   const menuBackdrop = document.createElement('div');
   menuBackdrop.id = 'menuBackdrop';
   menuBackdrop.setAttribute('aria-hidden', 'true');
   document.body.appendChild(menuBackdrop);
 
   function closeMobileMenu() {
+    mobileMenu.classList.remove('open');
     hamburger.classList.remove('open');
     hamburger.setAttribute('aria-expanded', 'false');
-    mobileMenu.classList.remove('open');
     menuBackdrop.classList.remove('active');
-    document.documentElement.classList.remove('menu-open');
+    root.classList.remove('menu-open');
   }
 
   function openMobileMenu() {
@@ -69,49 +66,23 @@ document.addEventListener('DOMContentLoaded', () => {
     hamburger.classList.add('open');
     hamburger.setAttribute('aria-expanded', 'true');
     menuBackdrop.classList.add('active');
-    document.documentElement.classList.add('menu-open');
+    root.classList.add('menu-open');
   }
 
-  hamburger.addEventListener('click', (e) => {
-    e.stopPropagation();
+  // Hamburger: toggle open/close
+  hamburger.addEventListener('click', () => {
     mobileMenu.classList.contains('open') ? closeMobileMenu() : openMobileMenu();
   });
 
-  // Tap backdrop to close
+  // Backdrop tap/click closes menu
   menuBackdrop.addEventListener('click', closeMobileMenu);
 
-  // Tap a nav link to close
+  // Each nav link closes menu on tap
   document.querySelectorAll('.mobile-link').forEach(link => {
     link.addEventListener('click', closeMobileMenu);
   });
 
-  // Escape key to close
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeMobileMenu();
-  });
-
-  hamburger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (mobileMenu.classList.contains('open')) {
-      closeMobileMenu();
-    } else {
-      openMobileMenu();
-    }
-  });
-
-  // Close when tapping the backdrop
-  menuBackdrop.addEventListener('click', closeMobileMenu);
-  menuBackdrop.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    closeMobileMenu();
-  });
-
-  // Close when a nav link is tapped
-  document.querySelectorAll('.mobile-link').forEach(link => {
-    link.addEventListener('click', closeMobileMenu);
-  });
-
-  // Close on Escape key
+  // Escape key closes menu
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeMobileMenu();
   });
@@ -152,11 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const skillObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        const bar = entry.target;
-        const pct = bar.getAttribute('data-percent') || '0';
-        const fill = bar.querySelector('.skill-fill');
+        const fill = entry.target.querySelector('.skill-fill');
+        const pct = entry.target.getAttribute('data-percent') || '0';
         requestAnimationFrame(() => { fill.style.width = pct + '%'; });
-        skillObserver.unobserve(bar);
+        skillObserver.unobserve(entry.target);
       }
     });
   }, { threshold: 0.4 });
@@ -170,10 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const ringFill = entry.target.querySelector('.edu-ring-fill');
-          // Full circle — 100% complete
           const circumference = 100.5;
-          const percentComplete = 1.0;
-          const offset = circumference - circumference * percentComplete;
+          const offset = circumference - circumference * 1.0; // 100%
           requestAnimationFrame(() => { ringFill.style.strokeDashoffset = offset; });
           ringObserver.unobserve(entry.target);
         }
@@ -184,8 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------------- CURSOR GLOW ---------------- */
   const cursorGlow = document.getElementById('cursorGlow');
-  const supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (supportsHover && cursorGlow) {
+  if (cursorGlow && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
     document.addEventListener('mousemove', (e) => {
       cursorGlow.style.left = e.clientX + 'px';
       cursorGlow.style.top = e.clientY + 'px';
@@ -195,52 +162,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---------------- BACK TO TOP ---------------- */
-  const backToTop = document.getElementById('backToTop');
-  backToTop.addEventListener('click', () => {
-    window.location.hash = '#home';
+  document.getElementById('backToTop').addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   /* ---------------- CONTACT FORM VALIDATION ---------------- */
   const form = document.getElementById('contactForm');
   const successMsg = document.getElementById('formSuccess');
-
-  function validateField(input, errId, validatorFn) {
-    const group = input.closest('.form-group');
-    const isValid = validatorFn(input.value.trim());
-    group.classList.toggle('invalid', !isValid);
-    return isValid;
-  }
-
   const isNonEmpty = (val) => val.length > 0;
   const isValidEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+  function validateField(input, validatorFn) {
+    const isValid = validatorFn(input.value.trim());
+    input.closest('.form-group').classList.toggle('invalid', !isValid);
+    return isValid;
+  }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     successMsg.classList.remove('show');
 
-    const nameInput = document.getElementById('cf-name');
-    const emailInput = document.getElementById('cf-email');
+    const nameInput    = document.getElementById('cf-name');
+    const emailInput   = document.getElementById('cf-email');
     const messageInput = document.getElementById('cf-message');
 
-    const nameValid = validateField(nameInput, 'err-name', isNonEmpty);
-    const emailValid = validateField(emailInput, 'err-email', isValidEmail);
-    const messageValid = validateField(messageInput, 'err-message', isNonEmpty);
+    const valid =
+      validateField(nameInput, isNonEmpty) &
+      validateField(emailInput, isValidEmail) &
+      validateField(messageInput, isNonEmpty);
 
-    if (nameValid && emailValid && messageValid) {
+    if (valid) {
       successMsg.classList.add('show');
       form.reset();
-      [nameInput, emailInput, messageInput].forEach(inp => inp.closest('.form-group').classList.remove('invalid'));
+      form.querySelectorAll('.form-group').forEach(g => g.classList.remove('invalid'));
     } else {
-      const firstInvalid = form.querySelector('.form-group.invalid input, .form-group.invalid textarea');
-      if (firstInvalid) firstInvalid.focus();
+      const first = form.querySelector('.form-group.invalid input, .form-group.invalid textarea');
+      if (first) first.focus();
     }
   });
 
-  // Clear invalid state as the user types
   ['cf-name', 'cf-email', 'cf-message'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('input', () => {
-      el.closest('.form-group').classList.remove('invalid');
+    document.getElementById(id).addEventListener('input', () => {
+      document.getElementById(id).closest('.form-group').classList.remove('invalid');
       successMsg.classList.remove('show');
     });
   });
