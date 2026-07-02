@@ -74,7 +74,17 @@ html[data-theme="dark"] {
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Prevent white flash on iOS Safari overscroll */
+  background-color: #98E0E8;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+html[data-theme="dark"] {
+  background-color: #55BED7;
+}
 
 body {
   font-family: var(--font-body);
@@ -83,10 +93,15 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   transition: background 0.4s var(--ease), color 0.4s var(--ease);
+  /* Prevent white overscroll bounce on iOS */
+  overscroll-behavior: none;
+  -webkit-overscroll-behavior: none;
 }
 
 html[data-theme="dark"] body {
   background: linear-gradient(180deg, #55BED7 0%, #4AAFC8 48%, #39A1B8 100%);
+  /* Ensure dark bg covers entire page including overscroll areas */
+  background-attachment: fixed;
 }
 
 img, svg { display: block; max-width: 100%; }
@@ -468,6 +483,8 @@ html[data-theme="dark"] .section-eyebrow {
 .hero {
   position: relative;
   min-height: 100vh;
+  /* iOS Safari fix: fill-available prevents white flash from dynamic toolbar */
+  min-height: -webkit-fill-available;
   display: flex;
   align-items: center;
   padding: 140px 0 80px;
@@ -485,6 +502,9 @@ html[data-theme="dark"] .hero {
   filter: blur(60px);
   opacity: 0.55;
   animation: blob-float 16s ease-in-out infinite;
+  /* GPU compositing — prevents repaint flash on scroll */
+  will-change: transform;
+  transform: translateZ(0);
 }
 html[data-theme="dark"] .blob { opacity: 0.35; }
 .blob-1 {
@@ -781,6 +801,8 @@ html[data-theme="dark"] .hero-meta span { color: var(--ink-faint); }
   50% { transform: translateY(6px); opacity: 0.4; }
 }
 @media (max-width: 768px) { .scroll-cue { display: none; } }
+
+
 
 /* ===================================================================
    ABOUT
@@ -1461,4 +1483,155 @@ html[data-theme="dark"] .tool-chip:hover {
 
 @media (max-width: 640px) {
   .footer-inner { flex-direction: column; text-align: center; }
+}
+
+/* ===================================================================
+   MOBILE / IOS OPTIMISATION
+   — Fixes white flash, layout overflows, touch targets, performance
+=================================================================== */
+
+/* ---- Prevent overscroll white flash on iOS Safari ---- */
+html, body {
+  overscroll-behavior-y: none;
+}
+
+/* ---- GPU-promote animated / glassmorphism elements ---- */
+.mock-window,
+.glass-card,
+.glass-chip,
+.navbar,
+.mobile-menu {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ---- Reduce backdrop-filter cost on mobile (saves paint) ---- */
+@media (max-width: 768px) {
+  .glass-card {
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+  }
+  .navbar.scrolled {
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+  }
+  .mobile-menu {
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+  /* Stop blob + window drift animations to prevent scroll flash */
+  .blob {
+    filter: blur(40px);
+    animation: none;
+    will-change: auto;
+  }
+  .mock-window {
+    animation: none;
+  }
+  .mock-blob-a, .mock-blob-b,
+  .pw-blob {
+    animation: none;
+    will-change: auto;
+  }
+  .float-chip {
+    display: none;
+  }
+}
+
+/* ---- Navbar: shrink logo subtitle on small screens ---- */
+@media (max-width: 480px) {
+  .logo-name { font-size: 0.92rem; }
+  .logo-subtitle { font-size: 0.62rem; }
+  .nav-inner { padding: 0 16px; gap: 10px; }
+}
+
+/* ---- Hero: tighten padding on small screens ---- */
+@media (max-width: 480px) {
+  .hero { padding: 110px 0 60px; }
+  .hero-name { font-size: clamp(1.9rem, 8vw, 2.8rem); }
+  .hero-summary { font-size: 0.94rem; }
+  .hero-actions { gap: 10px; }
+  .hero-actions .btn { padding: 12px 20px; font-size: 0.85rem; }
+  .hero-meta { gap: 12px; }
+  .meta-item strong { font-size: 0.95rem; }
+}
+
+/* ---- About: remove staggered card offsets on mobile ---- */
+@media (max-width: 640px) {
+  .about-card.card-2,
+  .about-card.card-3 { margin-left: 0; }
+  .about-traits { gap: 8px; }
+  .trait-pill { font-size: 0.8rem; padding: 8px 13px; }
+}
+
+/* ---- Skills: full-width on mobile ---- */
+@media (max-width: 640px) {
+  .skills-grid { gap: 24px; }
+  .tools-card, .soft-card { padding: 20px; }
+  .tool-chip { padding: 10px 12px; font-size: 0.88rem; }
+}
+
+/* ---- Projects: single column, tighten padding ---- */
+@media (max-width: 640px) {
+  .project-card { grid-template-columns: 1fr; }
+  .project-info { padding: 28px 20px; }
+  .project-visual { padding: 28px 20px; }
+  .project-features { grid-template-columns: 1fr; gap: 8px; }
+  .project-title { font-size: 1.4rem; }
+}
+
+/* ---- Education: stack on mobile ---- */
+@media (max-width: 480px) {
+  .edu-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 24px 20px;
+    text-align: left;
+  }
+  .edu-progress { align-self: center; }
+}
+
+/* ---- Experience timeline: tighten on mobile ---- */
+@media (max-width: 480px) {
+  .timeline-item { padding-left: 32px; }
+  .timeline-card { padding: 20px 18px; }
+  .timeline-card-head { flex-direction: column; gap: 10px; }
+  .timeline-list { grid-template-columns: 1fr; gap: 10px; }
+}
+
+/* ---- Contact: single column, readable on mobile ---- */
+@media (max-width: 640px) {
+  .contact-grid { gap: 28px; }
+  .contact-form { padding: 24px 20px; }
+  .contact-row { padding: 14px 16px; gap: 12px; }
+  .contact-icon { width: 38px; height: 38px; }
+  .contact-row span > span { font-size: 0.88rem; }
+}
+
+/* ---- Footer: center-stack on mobile ---- */
+@media (max-width: 480px) {
+  .footer-inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  .footer-copy, .footer-made { font-size: 0.78rem; }
+}
+
+/* ---- Minimum touch target size (44px) for all interactive elements ---- */
+@media (max-width: 768px) {
+  .btn, .nav-link, .mobile-link,
+  .theme-toggle, .hamburger, .back-to-top,
+  .contact-row {
+    min-height: 44px;
+  }
+}
+
+/* ---- Section spacing: tighter on small screens ---- */
+@media (max-width: 480px) {
+  .section { padding: 72px 0; }
+  .section-head { margin-bottom: 40px; }
+  .section-title { font-size: clamp(1.55rem, 6vw, 2rem); }
 }
