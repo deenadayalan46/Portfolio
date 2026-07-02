@@ -61,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
     root.classList.remove('menu-open');
   }
 
+  // Always start closed on page load
+  closeMobileMenu();
+
   function openMobileMenu() {
     mobileMenu.classList.add('open');
     hamburger.classList.add('open');
@@ -82,10 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
     link.addEventListener('click', closeMobileMenu);
   });
 
-  // Escape key closes menu
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeMobileMenu();
-  });
+  // Close menu if window resizes to desktop width
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 880) {
+      closeMobileMenu();
+    }
+  }, { passive: true });
 
   /* ---------------- ACTIVE NAV LINK ON SCROLL ---------------- */
   const sections = document.querySelectorAll('main section[id]');

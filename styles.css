@@ -446,6 +446,20 @@ html.menu-open { overflow: hidden; }
   .hamburger { display: flex; }
 }
 
+/* Desktop safety: mobile menu must never show above 880px */
+@media (min-width: 881px) {
+  .mobile-menu,
+  .mobile-menu.open {
+    transform: translateX(100%) !important;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  #menuBackdrop,
+  #menuBackdrop.active {
+    display: none !important;
+  }
+}
+
 /* ===================== SECTION SCAFFOLDING ===================== */
 .section { padding: 120px 0; position: relative; }
 .section-alt { background: var(--bg-alt); }
