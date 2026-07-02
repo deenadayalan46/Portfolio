@@ -414,6 +414,27 @@ html[data-theme="dark"] .mobile-menu {
   background: rgba(8, 26, 34, 0.92);
 }
 .mobile-menu.open { transform: translateX(0); }
+
+/* Backdrop overlay for tap-outside-to-close */
+#menuBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.35);
+  -webkit-tap-highlight-color: transparent;
+}
+#menuBackdrop.active {
+  display: block;
+}
+
+/* Prevent body scroll when menu is open — safe on iOS (no overflow:hidden) */
+body.menu-open {
+  position: fixed;
+  width: 100%;
+  /* Preserve scroll position */
+  top: calc(-1 * var(--scroll-y, 0px));
+}
 .mobile-link {
   font-family: var(--font-display);
   font-size: 1.05rem;

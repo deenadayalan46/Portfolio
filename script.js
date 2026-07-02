@@ -50,22 +50,58 @@ document.addEventListener('DOMContentLoaded', () => {
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
 
+  // Create a backdrop overlay for tap-outside-to-close
+  const menuBackdrop = document.createElement('div');
+  menuBackdrop.id = 'menuBackdrop';
+  document.body.appendChild(menuBackdrop);
+
   function closeMobileMenu() {
     hamburger.classList.remove('open');
     hamburger.setAttribute('aria-expanded', 'false');
     mobileMenu.classList.remove('open');
-    document.body.style.overflow = '';
+    menuBackdrop.classList.remove('active');
+    // Restore scroll position after removing position:fixed
+    const scrollY = document.body.style.top;
+    document.body.classList.remove('menu-open');
+    document.body.style.top = '';
+    window.scrollTo(0, parseInt(scrollY || '0') * -1);
   }
 
-  hamburger.addEventListener('click', () => {
-    const isOpen = mobileMenu.classList.toggle('open');
-    hamburger.classList.toggle('open', isOpen);
-    hamburger.setAttribute('aria-expanded', String(isOpen));
-    document.body.style.overflow = isOpen ? 'hidden' : '';
+  function openMobileMenu() {
+    // Save current scroll position before fixing body
+    document.body.style.setProperty('--scroll-y', `-${window.scrollY}px`);
+    document.body.style.top = `-${window.scrollY}px`;
+    mobileMenu.classList.add('open');
+    hamburger.classList.add('open');
+    hamburger.setAttribute('aria-expanded', 'true');
+    menuBackdrop.classList.add('active');
+    document.body.classList.add('menu-open');
+  }
+
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (mobileMenu.classList.contains('open')) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
   });
 
+  // Close when tapping the backdrop
+  menuBackdrop.addEventListener('click', closeMobileMenu);
+  menuBackdrop.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    closeMobileMenu();
+  });
+
+  // Close when a nav link is tapped
   document.querySelectorAll('.mobile-link').forEach(link => {
     link.addEventListener('click', closeMobileMenu);
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMobileMenu();
   });
 
   /* ---------------- ACTIVE NAV LINK ON SCROLL ---------------- */
